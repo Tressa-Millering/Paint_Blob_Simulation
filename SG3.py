@@ -145,7 +145,7 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debu
     monocolor_squares:Grid = [[1] * N for _ in range(N)]   #Track if a square has more than on color dropped
 
     start = 0
-    if (debug):
+    if debug:
         start = time.perf_counter()
 
     for tick in range(T):
@@ -160,16 +160,12 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debu
             if gui:
                 colorSquare(new_color, loc)
             time.sleep(anim_step)
-
-            # TESTING, for use when not in TKinter window
-            if (debug):
+            if debug:
                 console_animate(colors, N)
-            # TESTING
-
 
         # this is definitely inefficient, will find better solution later
         if 0 not in blob_counts and tick != T and not filled:
-            #Call whatever the output stats function is
+            #Call whatever the output stats function will be
             filled = True
 
     #squares that haven't been dropped on aren't monocolor
@@ -178,7 +174,7 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debu
             if colors[i][j] == 0:
                 monocolor_squares[i][j] = 0
 
-    if (debug):
+    if debug:
         end = time.perf_counter()
         print("TIME:", format(end-start, '.2f'), "seconds" "\n")
         print_array(colors, N, "COLORS")
