@@ -33,12 +33,10 @@
 ║           								                                                  ║
 ╚═════════════════════════════════════════════════════════════════════════════════════════════╝
 """
-import tkinter as tk
 import random
 import time
-
-
-
+import tkinter as tk
+from tkinter.constants import ALL
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Globals  (ADD DOCUMENTATION)
@@ -138,7 +136,7 @@ This function declaration is disgustingly long lmao
 """
 def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debug:bool = False, gui:bool = False)->tuple[Grid, Grid, Grid]:
 
-    anim_step:float = (anim_time / T) * 0.8                #sleep time between animation updates
+    anim_step:float = (anim_time / T)                  #sleep time between animation updates
     filled:bool = False                                    #has the grid been filled
     colors:Grid = [[0] * N for _ in range(N)]              #Track current top layer of colors. 0 none, 1 red, 2 green, 3 blue
     blob_counts:Grid = [[0] * N for _ in range(N)]         #Track how many blobs dropped on each square
@@ -160,8 +158,8 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debu
             if gui:
                 colorSquare(new_color, loc[0],loc[1])
             time.sleep(anim_step)
-            if debug:
-                console_animate(colors, N)
+            #if debug:
+                #console_animate(colors, N)
 
         # this is definitely inefficient, will find better solution later
         if 0 not in blob_counts and tick != T and not filled:
@@ -209,7 +207,7 @@ def buildWindow():
 
     root = tk.Tk()
     root.title("SG3 Paint Blobs")
-    root.geometry("1000x700")
+    root.geometry("1000x725")
 
     # explanation section
     explanationFrame = tk.Frame(root, borderwidth=2, relief="solid")
@@ -252,7 +250,7 @@ def buildWindow():
     gridLabel = tk.Label(gridFrame, text="Grid", font=("Arial", 12, "bold"))
     gridLabel.pack()
 
-    canvas = tk.Canvas(gridFrame, width=450, height=350, bg="white")
+    canvas = tk.Canvas(gridFrame, width=401, height=401, bg="white", highlightthickness=1, highlightbackground="black")
     canvas.pack(padx=10, pady=10)
 
     graphFrame = tk.Frame(bottomFrame, borderwidth=2, relief="solid")
@@ -261,7 +259,7 @@ def buildWindow():
     graphLabel = tk.Label(graphFrame, text="Graph", font=("Arial", 12, "bold"))
     graphLabel.pack()
 
-    graphCanvas = tk.Canvas(graphFrame, width=450, height=350, bg="white")
+    graphCanvas = tk.Canvas(graphFrame, width=450, height=450, bg="white")
     graphCanvas.pack(padx=10, pady=10)
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -275,11 +273,11 @@ def drawGrid(N:int):
     canvas.delete("all")
     rectangles = []
 
-    canvasSize = 350
+    canvasSize = 400
     cellSize = canvasSize // N
 
-    startX = 50
-    startY = 0
+    startX = 1
+    startY = 1
 
     for row in range(N):
         rowList = []
@@ -292,7 +290,7 @@ def drawGrid(N:int):
             square = canvas.create_rectangle(
                 x1, y1, x2, y2,
                 fill="white",
-                outline="black"
+                outline="white"
             )
 
             rowList.append(square)
@@ -444,8 +442,19 @@ def main():
     # run first
     # run second
     #run choice
-    colors, blob_counts, monocolor_squares = run_simulation(10, 500, True, 0, debug=True)
+    buildWindow()
+    N = 10
+    drawGrid(N)
 
+    # for i in range(N):
+    #     colorSquare(3, i, 0)
+    #     colorSquare(3, i, N-1)
+    #     colorSquare(3, 0, i)
+    #     colorSquare(3, N-1, i)
+
+    colors, blob_counts, monocolor_squares = run_simulation(N, 100, True, 10, gui=True,debug=True)
+    updateStatus("Finished!")
+    root.mainloop()
     pass
 
 if __name__ == "__main__":
