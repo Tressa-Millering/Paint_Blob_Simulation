@@ -519,7 +519,7 @@ def main():
     # run second
     #run choice
     buildWindow()
-    N = 10
+    N = 100
     drawGrid(N)
 
     # for i in range(N):
@@ -528,7 +528,7 @@ def main():
     #     colorSquare(3, 0, i)
     #     colorSquare(3, N-1, i)
 
-    colors, blob_counts, monocolor_squares = run_simulation(N, 100, True, 10, gui=True,debug=True)
+    colors, blob_counts, monocolor_squares = run_simulation(N, 5000, True, 0, gui=True,debug=True)
     updateStatus("Finished!")
     root.mainloop()
     pass
