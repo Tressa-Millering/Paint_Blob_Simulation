@@ -201,7 +201,83 @@ def drop_blob(N:int)->tuple[int, Coord]:
     return new_color, loc
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+Computes the lowest, average, and highest blob counts for all squares in grid.
 
+    :param blob_counts  | (Grid) --> 2D list of blob counts per square
+    :param N            | (int)  --> grid dimension
+    
+    :return: tuple of (lowest, average, highest) blob counts
+"""
+def getBlobStats(blob_counts:Grid, N:int)->tuple[int, float, int]:
+    # flatten 2D grid into single list for easy min/max/sum
+    counts = [blob_counts[r][c] for r in range(N) for c in range(N)]
+    
+    low  = min(counts)
+    high = max(counts)
+    avg  = sum(counts) / (N * N)
+    
+    return low, avg, high
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+Runs 10 simulations holding MaxT constant while increasing N
+by increment each time. Collects low, avg, high blob counts
+per simulation and displays results on graph.
+
+    :param N         | (int) --> starting grid size
+    :param MaxT      | (int) --> number of blobs dropped, stays constant
+    :param increment | (int) --> how much N grows each simulation (1/10/100/1000)
+    
+    :return: None
+"""
+def runBatchOptionOne(N:int, MaxT:int, increment:int):
+    results = []
+    
+    for i in range(10):
+        currentN = N + (i * increment)  # grid grows each simulation
+        
+        # run simulation, only need blob_counts for stats
+        colors, blob_counts, monocolor = run_simulation(currentN, MaxT)
+        
+        low, avg, high = getBlobStats(blob_counts, currentN)
+        
+        # build result in format plotGraph expects
+        results.append({"x": currentN, "lowest": low, "average": avg, "highest": high})
+        
+        updateProgress(i + 1, 10)  # show user something is happening
+    
+    plotGraph(results)
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+Runs 10 simulations holding N constant while increasing MaxT
+by increment each time. Collects low, avg, high blob counts
+per simulation and displays results on graph.
+
+    :param N         | (int) --> grid size, stays constant
+    :param MaxT      | (int) --> starting number of blobs dropped
+    :param increment | (int) --> how much MaxT grows each simulation (1/10/100/1000)
+    
+    :return: None
+"""
+def runBatchOptionTwo(N:int, MaxT:int, increment:int):
+    results = []
+    
+    for i in range(10):
+        currentMaxT = MaxT + (i * increment)  # MaxT grows each simulation
+        
+        # run simulation, only need blob_counts for stats
+        colors, blob_counts, monocolor = run_simulation(N, currentMaxT)
+        
+        low, avg, high = getBlobStats(blob_counts, N)
+        
+        # build result in format plotGraph expects
+        results.append({"x": currentMaxT, "lowest": low, "average": avg, "highest": high})
+        
+        updateProgress(i + 1, 10)  # show user something is happening
+    
+    plotGraph(results)
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def buildWindow():
@@ -450,4 +526,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
