@@ -480,7 +480,7 @@ def buildWindow():
     graphLabel = tk.Label(graphFrame, text="Graph", font=("Arial", 12, "bold"))
     graphLabel.pack()
 
-    graphCanvas = tk.Canvas(graphFrame, width=450, height=450, bg="white")
+    graphCanvas = tk.Canvas(graphFrame, width=550, height=450, bg="white")
     graphCanvas.pack(padx=10, pady=10)
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -678,6 +678,10 @@ def plotGraph(results):
     if minX == maxX:
         maxX += 1
 
+    prevLow = None
+    prevAvg = None
+    prevHigh = None
+
     for item in results:
         x = 50 + ((item["x"] - minX) / (maxX - minX)) * 350
 
@@ -685,15 +689,24 @@ def plotGraph(results):
         avgY = 250 - (item["average"] / maxY) * 200
         highY = 250 - (item["highest"] / maxY) * 200
 
+        if prevLow is not None:
+            graphCanvas.create_line(prevLow[0], prevLow[1], x, lowY)
+            graphCanvas.create_line(prevAvg[0], prevAvg[1], x, avgY)
+            graphCanvas.create_line(prevHigh[0], prevHigh[1], x, highY)
+
         graphCanvas.create_oval(x - 4, lowY - 4, x + 4, lowY + 4)
         graphCanvas.create_rectangle(x - 4, avgY - 4, x + 4, avgY + 4)
         graphCanvas.create_polygon(x, highY - 5, x - 5, highY + 5, x + 5, highY + 5)
 
         graphCanvas.create_text(x, 265, text=str(item["x"]), font=("Arial", 8))
 
-    graphCanvas.create_text(475, 55, text="circle = lowest")
-    graphCanvas.create_text(475, 75, text="square = average")
-    graphCanvas.create_text(475, 95, text="triangle = highest")
+        prevLow = (x, lowY)
+        prevAvg = (x, avgY)
+        prevHigh = (x, highY)
+
+    graphCanvas.create_text(440, 55, text="circle = lowest")
+    graphCanvas.create_text(440, 75, text="square = average")
+    graphCanvas.create_text(440, 95, text="triangle = highest")
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -724,8 +737,7 @@ def main():
         firstN,
         firstMaxT,
         animate=True,
-        anim_time=10,
-        gui=True
+        anim_time=10
     )
 
     # SECOND USER-CONTROLLED SIMULATION
@@ -734,13 +746,11 @@ def main():
     MaxT = getValidMaxT()
     anim = (MaxT < 250000)
     drawGrid(N)  #rebuild canvas for new N
-    colors = run_simulation(
+    colors, blob_counts, monocolor_squares = run_simulation(
         N,
         MaxT,
-        animate=anim,
-        debug=True,
-        gui=True
-    )
+        animate=anim
+)
 
     showFinalCanvas(colors)
 
