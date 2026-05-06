@@ -330,8 +330,6 @@ tracks blobs dropped, lowest/avg/highest blob counts, total blobs per color, num
     :return: dict[str, int | float] (contains stats calculated from params)
 """
 def makeStats(blob_counts:Grid, monocolor_squares:Grid, blobsDropped:int, N:int, colorTotals:list[int])-> dict[str, int | float]:
-
-def makeStats(blob_counts, monocolor_squares, blobsDropped, N, colorTotals):
     low, avg, high = getBlobStats(blob_counts, N)
 
     oneColorSquares = 0
