@@ -20,7 +20,8 @@
 ║ Major Dates        																		  ║
 ║   - 04/21/2026 (Repository created)														  ║
 ║	- 04/28/2026 (Basic GUI implemented)            									      ║
-║	- 04/29/2026 (Basic simulation implemented)        									      ║
+║	- 04/29/2026 (Basic simulation implemented)   
+║   - 05/06/2026 (finalized main)
 ║                                                    						                  ║
 ╟─────────────────────────────────────────────────────────────────────────────────────────────╢
 ║ Packages Used        																		  ║
@@ -42,16 +43,13 @@ from tkinter import simpledialog, messagebox
 import matplotlib.pyplot as plt
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Globals  (ADD DOCUMENTATION)
-root = None
-canvas = None
-statsBox = None
-statusLabel = None
-graphCanvas = None
-
+# Globals 
+root = None # main Tkinter window
+canvas = None # grid drawing canvas
+statsBox = None # box for statistcis
+statusLabel = None # progress/status display label
+graphCanvas = None #cavnas to draw graphs
 rectangles = []
-#Think this can be removed; its immediately overwritten the one time its used
-#cellSize = 25
 
 color_opts = ["red", "green", "blue"]
 console_color_opts = ["\033[30m", "\033[31m", "\033[32m", "\033[34m"]
@@ -60,19 +58,7 @@ console_color_opts = ["\033[30m", "\033[31m", "\033[32m", "\033[34m"]
 Grid = list[list[int]]
 Coord = tuple[int, int]
 
-
-
-# -function prototypes ---
-
-# Person 3
-# makeGridData(N)
-# dropBlob(data)
-# runSim(N, MaxT)
-# computeStats(data, blobsDropped)
-# checkAllSquaresPainted(data)
-
-# Person 2
-# getValidN()
+#gets valid int based on parameters for low and high value. prompts for another input if invalid
 def getValidInt(title, prompt, low, high):
     while True:
         value = simpledialog.askstring(title, prompt, parent=root)
@@ -100,6 +86,7 @@ def getValidInt(title, prompt, low, high):
 
         return value
 
+# gets valid N
 def getValidN():
     return getValidInt(
         "Grid Size",
@@ -108,7 +95,7 @@ def getValidN():
         100
     )
 	
-# getValidMaxT()
+# gets valid maxT
 def getValidMaxT():
     return getValidInt(
         "Maximum Time / Blobs",
@@ -116,7 +103,7 @@ def getValidMaxT():
         4,
         1000000
     )
-# getValidIncrement()
+# gets valid increment
 def getValidIncrement(title, prompt):
     valid_values = [1, 10, 100, 1000]
 
@@ -168,11 +155,6 @@ def getMenuChoice():
 
         return int(value)
 
-# Person 5
-# runBatchOptionOne(N, MaxT, increment)
-# runBatchOptionTwo(N, MaxT, increment)
-
-
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 ANIMATE IN CONSOLE
@@ -213,11 +195,13 @@ def print_array(array, length, label=""):
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
-ADD DESCRIPTION
-runs simulation, obviously. ill add a better description later
-Will remove debug and gui before submission. 
-This function declaration is disgustingly long lmao
+Run paint blob simulation on NxN grid for T drops
+Tracks:
+top visible color on each square
+total blobs per square
+squares with only one color
 
+can animate in GUI or terminal if needed
 	:param N         |   (int) ---> grid size
     :param T         |   (int) ---> ticks per sim 
     :param animate   |   (bool) --> animate sim or not, false by default
@@ -295,7 +279,7 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debu
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
-ADD DOCUMENTATION
+generates random blob color and grid location.
 """
 def drop_blob(N:int)->tuple[int, Coord]:
     new_color:int = random.randint(1, 3)
@@ -322,6 +306,10 @@ def getBlobStats(blob_counts:Grid, N:int)->tuple[int, float, int]:
     return low, avg, high
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+"""
+builds a statistics dictionary for simulation results
+tracks blobs dropped, lowest/avg/highest blob counts, total blobs per color, number of one color squares
+"""
 def makeStats(blob_counts, monocolor_squares, blobsDropped, N, colorTotals):
     low, avg, high = getBlobStats(blob_counts, N)
 
@@ -402,6 +390,7 @@ def runBatchOptionTwo(N:int, MaxT:int, increment:int):
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#Builds window using global variables, with explination, stats, graph, and grid using TKinter
 def buildWindow():
     global root, canvas, statsBox, statusLabel, graphCanvas
 
@@ -466,6 +455,7 @@ def buildWindow():
 
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Draws NxN rectangle on canvas based on N parameter
 def drawGrid(N:int):
     """Draw an N by N grid on the canvas."""
     global rectangles, cellSize
@@ -594,6 +584,10 @@ def clearStats():
 
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Plot each simulation result as:
+# circle = lowest blob count
+# square = average blob count
+# triangle = highest blob count
 def plotGraph(results):
     """
     Display a simple graph of lowest, average, and highest blob counts.
@@ -647,10 +641,17 @@ def plotGraph(results):
 
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+program flow:
+run 10x10 simulation
+run user selected simulation
+display grid
+run second batch experiment
+display grid and statistics
+"""
 def main():
     buildWindow()
 
-    # REQUIRED FIRST SIMULATION
     firstN = 10
     firstMaxT = 300
 
