@@ -787,7 +787,6 @@ def main():
 
     drawGrid(2)  #clear the canvas
 
-
     if choice == 1:
         N = getValidN()
         increment = getValidIncrement("N Increment", "Enter N increment")
