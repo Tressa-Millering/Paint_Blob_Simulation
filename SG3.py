@@ -28,10 +28,14 @@
 ║	- random																		          ║
 ║	- tkinter																		          ║
 ║	- time  																		          ║
+║	- matplotlib																	          ║
 ╠━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╣
 ║ Outside Sources																			  ║
 ║     - https://stackoverflow.com/questions/42250235/border-colours-of-canvases-tkinter       ║
 ║           Used to add border to paint canvas                                                ║
+║     - https://www.geeksforgeeks.org/python/how-to-embed-matplotlib-charts-in-tkinter-gui/   ║
+║     - https://matplotlib.org/stable/gallery/user_interfaces/embedding_in_tk_sgskip.html     ║
+║           Both above used to add matplotlib graph to TK window                              ║
 ╚═════════════════════════════════════════════════════════════════════════════════════════════╝
 """
 
@@ -40,6 +44,13 @@ import time
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 
+from matplotlib import style
+import matplotlib as plt
+plt.style.use('bmh')
+
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Globals
 root = None # main Tkinter window
@@ -47,6 +58,9 @@ canvas = None # grid drawing canvas
 statsBox = None # box for statistics
 statusLabel = None # progress/status display label
 graphCanvas = None #canvas to draw graphs
+fig = None
+ax = None
+chart = None
 rectangles = [] #grid of squares on the canvas
 
 color_opts = ["red", "green", "blue"] #color options
@@ -380,7 +394,7 @@ def runBatchOptionOne(N:int, MaxT:int, increment:int):
         
         updateProgress(i + 1, 10)  # show user something is happening
     
-    plotGraph(results)
+    plotGraph(results, True)
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -413,7 +427,7 @@ def runBatchOptionTwo(N:int, MaxT:int, increment:int):
         
         updateProgress(i + 1, 10)  # show user something is happening
     
-    plotGraph(results)
+    plotGraph(results, False)
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
@@ -424,18 +438,18 @@ Builds main TK window that houses program GUI
 Uses globals root, canvas, statsbox, statusLabel, and graphCanvas
 """
 def buildWindow():
-    global root, canvas, statsBox, statusLabel, graphCanvas
+    global root, canvas, statsBox, statusLabel, graphCanvas, ax, fig, chart
 
     root = tk.Tk()
     root.title("SG3 Paint Blobs")
-    root.geometry("1000x725")
+    root.geometry("1000x725+0+0")
 
     # explanation section
     explanationFrame = tk.Frame(root, borderwidth=2, relief="solid")
     explanationFrame.pack(fill="x", padx=10, pady=5)
 
     explanationText = (
-        "SG3 Paint Blobs Simulation\n"
+        "\t\t\t\t   SG3 Paint Blobs Simulation\n"
         "Random red, green, or blue paint blobs drop onto an NxN canvas. "
         "The newest blob is visible on each square."
     )
@@ -480,8 +494,13 @@ def buildWindow():
     graphLabel = tk.Label(graphFrame, text="Graph", font=("Arial", 12, "bold"))
     graphLabel.pack()
 
-    graphCanvas = tk.Canvas(graphFrame, width=550, height=450, bg="white")
+    graphCanvas = tk.Canvas(graphFrame, width=500, height=400, bg="white", highlightthickness=1, highlightbackground="black")
     graphCanvas.pack(padx=10, pady=10)
+
+    fig = Figure(figsize=(5, 4), dpi=100)
+    ax = fig.add_subplot(111)
+    chart = FigureCanvasTkAgg(fig, master=graphCanvas)
+    chart.get_tk_widget().place(x=5, y=1)
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -670,71 +689,36 @@ Circle = lowest blob count
 Square = average blob count
 Triangle = highest blob count
 
-    :param results  |  (dic[str, int | float]) --> stats from makeStats
+    :param results   |  (dict[str, int | float]) --> stats from makeStats
+    :param batch_one |                    (bool) --> is a graph for batch one
 """
-def plotGraph(results):
-    """
-
-    Expected results format:
-    [
-        {"x": 10, "lowest": 0, "average": 3.2, "highest": 8},
-        {"x": 20, "lowest": 0, "average": 2.1, "highest": 6}
-    ]
-    """
-    graphCanvas.delete("all")
+def plotGraph(results, batch_one:bool):
 
     if len(results) == 0:
         return
 
-    graphCanvas.create_text(250, 15, text="Batch Simulation Results")
+    xs = [item["x"] for item in results]
+    lows = [item["lowest"] for item in results]
+    avgs = [item["average"] for item in results]
+    highs = [item["highest"] for item in results]
 
-    graphCanvas.create_line(50, 250, 420, 250)
-    graphCanvas.create_line(50, 40, 50, 250)
+    ax.plot(xs, lows, marker="o", linestyle="-", color="red", markersize=6, label="Lowest")
+    ax.plot(xs, avgs, marker="s", linestyle="-", color="blue", markersize=6, label="Average")
+    ax.plot(xs, highs, marker="^", linestyle="-", color="green", markersize=6, label="Highest")
 
-    maxY = max(item["highest"] for item in results)
-    if maxY == 0:
-        maxY = 1
+    xAx = None
+    if batch_one:
+        xAx = "N Per Simulation"
+    else:
+        xAx = "Blobs Per Simulation"
 
-    minX = min(item["x"] for item in results)
-    maxX = max(item["x"] for item in results)
+    ax.set_title("Blobs Per Square versus " + xAx)
+    ax.set_xlabel(xAx)
+    ax.set_ylabel("Blob Count")
+    ax.legend(loc="upper right")
 
-    if minX == maxX:
-        maxX += 1
-
-    prevLow = None
-    prevAvg = None
-    prevHigh = None
-
-    for item in results:
-        x = 50 + ((item["x"] - minX) / (maxX - minX)) * 350
-
-        lowY = 250 - (item["lowest"] / maxY) * 200
-        avgY = 250 - (item["average"] / maxY) * 200
-        highY = 250 - (item["highest"] / maxY) * 200
-
-        if prevLow is not None:
-            graphCanvas.create_line(prevLow[0], prevLow[1], x, lowY)
-            graphCanvas.create_line(prevAvg[0], prevAvg[1], x, avgY)
-            graphCanvas.create_line(prevHigh[0], prevHigh[1], x, highY)
-
-        graphCanvas.create_oval(x - 4, lowY - 4, x + 4, lowY + 4)
-        graphCanvas.create_rectangle(x - 4, avgY - 4, x + 4, avgY + 4)
-        graphCanvas.create_polygon(x, highY - 5, x - 5, highY + 5, x + 5, highY + 5)
-
-        graphCanvas.create_text(x, 265, text=str(item["x"]), font=("Arial", 8))
-
-        prevLow = (x, lowY)
-        prevAvg = (x, avgY)
-        prevHigh = (x, highY)
-        # axis labels
-    graphCanvas.create_text(235, 290, text="Simulation Input")
-    graphCanvas.create_text(15, 145, text="Blob Count", angle=90)
-
-    graphCanvas.create_text(440, 55, text="circle = lowest")
-    graphCanvas.create_text(440, 75, text="square = average")
-    graphCanvas.create_text(440, 95, text="triangle = highest")
-
-
+    # Embed the figure in the Tkinter canvas
+    chart.draw()
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -759,7 +743,6 @@ def main():
 
     drawGrid(firstN)
     root.update()
-    time.sleep(1)
 
     run_simulation(
         firstN,
@@ -782,7 +765,7 @@ def main():
 
     showFinalCanvas(colors)
 
-    # EXPERIMENT OPTIONS
+    #EXPERIMENT OPTIONS
     choice = getMenuChoice()
 
     drawGrid(2)  #clear the canvas
@@ -801,6 +784,7 @@ def main():
 
         runBatchOptionTwo(N, MaxT, increment)
 
+    time.sleep(5)
     messagebox.showinfo("Finished", "Press OK to finish the program.")
     root.destroy()
 
