@@ -229,7 +229,7 @@ This function declaration is disgustingly long lmao
 	               Grid (# of blobs dropped on each square),
 	               Grid (tracks squares that have only one color)]
 """
-def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debug:bool = False, gui:bool = False)->tuple[Grid, Grid, Grid]:
+def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debug:bool = False, gui:bool = False, showStats:bool = True)->tuple[Grid, Grid, Grid]:
 
     anim_step:float = (anim_time / T)                      #sleep time between animation updates
     filled:bool = False                                    #has the grid been filled
@@ -237,13 +237,15 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debu
     blob_counts:Grid = [[0] * N for _ in range(N)]         #Track how many blobs dropped on each square
     monocolor_squares:Grid = [[1] * N for _ in range(N)]   #Track if a square has more than on color dropped
 
+    colorTotals = [0,0,0,0]
     start = 0
     if debug:
         start = time.perf_counter()
 
     for tick in range(T):
-        updateProgress(tick, T)
+        updateProgress(tick + 1, T)
         new_color, loc = drop_blob(N)
+        colorTotals[new_color] += 1
         if colors[loc[0]][loc[1]] not in (new_color, 0):
             monocolor_squares[loc[0]][loc[1]] = 0
 
@@ -254,11 +256,14 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debu
             if gui:
                 colorSquare(new_color, loc[0],loc[1])
             time.sleep(anim_step)
-            #if debug:
-                #console_animate(colors, N)
+            if debug:
+                console_animate(colors, N)
 
-        if 0 not in blob_counts and tick != T and not filled:
+        if all(0 not in row for row in blob_counts) and not filled:
             #Call whatever the output stats function will be
+            if showStats:
+                stats = makeStats(blob_counts, monocolor_squares, tick + 1, N, colorTotals)
+                printResults(stats)
             filled = True
 
     #squares that haven't been dropped on aren't monocolor
@@ -266,6 +271,10 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, debu
         for j in range(N):
             if colors[i][j] == 0:
                 monocolor_squares[i][j] = 0
+        
+    if showStats:
+        stats = makeStats(blob_counts, monocolor_squares, tick + 1, N, colorTotals)
+        printResults(stats)
 
     if debug:
         end = time.perf_counter()
@@ -312,6 +321,26 @@ def getBlobStats(blob_counts:Grid, N:int)->tuple[int, float, int]:
     
     return low, avg, high
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def makeStats(blob_counts, monocolor_squares, blobsDropped, N, colorTotals):
+    low, avg, high = getBlobStats(blob_counts, N)
+
+    oneColorSquares = 0
+    for row in monocolor_squares:
+        for val in row:
+            if val == 1:
+                oneColorSquares += 1
+
+    return {
+        "blobsDropped": blobsDropped,
+        "lowest": low,
+        "highest": high,
+        "average": avg,
+        "red": colorTotals[1],
+        "green": colorTotals[2],
+        "blue": colorTotals[3],
+        "oneColorSquares": oneColorSquares
+    }
 """
 Runs 10 simulations holding MaxT constant while increasing N
 by increment each time. Collects low, avg, high blob counts
@@ -330,7 +359,7 @@ def runBatchOptionOne(N:int, MaxT:int, increment:int):
         currentN = N + (i * increment)  # grid grows each simulation
         
         # run simulation, only need blob_counts for stats
-        colors, blob_counts, monocolor = run_simulation(currentN, MaxT)
+        colors, blob_counts, monocolor = run_simulation(currentN, MaxT, showStats=False)
         
         low, avg, high = getBlobStats(blob_counts, currentN)
         
@@ -360,7 +389,7 @@ def runBatchOptionTwo(N:int, MaxT:int, increment:int):
         currentMaxT = MaxT + (i * increment)  # MaxT grows each simulation
         
         # run simulation, only need blob_counts for stats
-        colors, blob_counts, monocolor = run_simulation(N, currentMaxT)
+        colors, blob_counts, monocolor = run_simulation(N, currentMaxT, showStats= False)
         
         low, avg, high = getBlobStats(blob_counts, N)
         
@@ -495,7 +524,7 @@ def updateStatus(message):
 def updateProgress(current, total):
     """Display simulation progress while the program runs."""
     bar_length: int = 30
-    progress: float = current / (total-1)
+    progress: float = current / total
     filled: int = int(progress * bar_length)
     empty: int = bar_length - filled
 
@@ -523,8 +552,9 @@ def showFinalCanvas(data):
 
     for row in range(N):
         for col in range(N):
-            color = data[row][col]["topColor"]
-            colorSquare(color, row, col)
+            color = data[row][col]
+            if color != 0:
+                colorSquare(color, row, col)
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -581,7 +611,7 @@ def plotGraph(results):
 
     graphCanvas.create_text(300, 15, text="Batch Simulation Results")
 
-    graphCanvas.create_line(50, 250, 560, 250)
+    graphCanvas.create_line(50, 250, 420, 250)
     graphCanvas.create_line(50, 40, 50, 250)
 
     maxY = max(item["highest"] for item in results)
@@ -595,7 +625,7 @@ def plotGraph(results):
         maxX += 1
 
     for item in results:
-        x = 50 + ((item["x"] - minX) / (maxX - minX)) * 500
+        x = 50 + ((item["x"] - minX) / (maxX - minX)) * 350
 
         lowY = 250 - (item["lowest"] / maxY) * 200
         avgY = 250 - (item["average"] / maxY) * 200
@@ -618,24 +648,59 @@ def plotGraph(results):
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def main():
-    # person 1 flow
-    # build window
-    # run first
-    # run second
-    #run choice
     buildWindow()
-    N = 100
-    drawGrid(N)
 
-    # for i in range(N):
-    #     colorSquare(3, i, 0)
-    #     colorSquare(3, i, N-1)
-    #     colorSquare(3, 0, i)
-    #     colorSquare(3, N-1, i)
+    # REQUIRED FIRST SIMULATION
+    firstN = 10
+    firstMaxT = 300
 
-    colors, blob_counts, monocolor_squares = run_simulation(N, 10000, True, 0, gui=True,debug=True)
-    root.mainloop()
-    pass
+    drawGrid(firstN)
+    root.update()
+    time.sleep(1)
+
+    run_simulation(
+        firstN,
+        firstMaxT,
+        animate=True,
+        anim_time=10,
+        gui=True
+    )
+
+    # SECOND USER-CONTROLLED SIMULATION
+    N = getValidN()
+    MaxT = getValidMaxT()
+
+    colors, blob_counts, monocolor_squares = run_simulation(
+        N,
+        MaxT,
+        animate=False,
+        gui=False
+    )
+
+    
+
+    showFinalCanvas(colors)
+
+    # EXPERIMENT OPTIONS
+    choice = getMenuChoice()
+
+    if choice == 1:
+        N = getValidN()
+        increment = getValidIncrement("N Increment", "Enter N increment")
+        MaxT = getValidMaxT()
+
+        runBatchOptionOne(N, MaxT, increment)
+
+    else:
+        MaxT = getValidMaxT()
+        increment = getValidIncrement("T Increment", "Enter T increment")
+        N = getValidN()
+
+        runBatchOptionTwo(N, MaxT, increment)
+
+    messagebox.showinfo("Finished", "Press OK to finish the program.")
+    root.destroy()
+
 
 if __name__ == "__main__":
     main()
