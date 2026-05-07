@@ -13,9 +13,43 @@
 ║  - Matthew Yeager                                  			                			  ║
 ║  - Jacob Young                                                 				    		  ║
 ╠━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╣
-║ Program Description																		  ║
+║ Program Description                                                                         ║
 ╠---------------------------------------------------------------------------------------------╣
-║	                                                                                          ║
+║ This script simulates dropping red, green, or blue paint blobs onto an empty canvas.        ║
+║ Each tick, a blob is dropped at a random location, overwriting any prior paint. Multiple    ║
+║ experiments are run using parameters provided by the user.                                  ║
+║                                                                                             ║
+║ On first run, an example simulation drops 300 blobs onto a 10x10 grid. Stats are shown      ║
+║ up to twice: once when every cell has been covered for the first time (if ever), and once   ║
+║ after the 300th blob drops.                                                                 ║
+║                                                                                             ║
+║ After the example, the user is prompted to enter:                                           ║
+║   • N — the grid size for the next simulation                                               ║
+║   • T — the number of blob drops to simulate                                                ║
+║                                                                                             ║
+║ A new simulation runs with these constraints, followed by a batch of 10 simulations in      ║
+║ which the user chooses to increment either N or T each run. When all 10 are complete,       ║
+║ stats across the batch are displayed as a graph, and the program ends.                      ║
+╠━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╣
+║ Major Data Structures Relevant to the Simulation                                            ║
+╠---------------------------------------------------------------------------------------------╣
+║ The main simulation returns three arrays. Each are a list of lists of integers,             ║
+║ representing a grid.                                                                        ║
+║   - colors, tracks the current top layer of colors on the canvas:                           ║
+║         0 for none, 1 for red, 2 for green, 3 for blue                                      ║
+║   - blob_counts, tracks how many blobs dropped on each square                               ║
+║   - Monocolor_squares, tracks if a square has more than on color dropped                    ║
+║                                                                                             ║
+║ These data are processed into a dictionary used to display stats to the user. The key is    ║
+║ a string and the value is an integer. The following data are included:                      ║
+║   - Total blobs dropped                                                                     ║
+║   - Lowest blob count on a square                                                           ║
+║   - Average blobs per square                                                                ║
+║   - Highest blob count on a square                                                          ║
+║   - Count of red blobs                                                                      ║
+║   - Count of blue blobs                                                                     ║
+║   - Count of green blobs                                                                    ║
+║   - Number of squares that have only had one color dropped                                  ║
 ╠━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╣
 ║ Major Dates        																		  ║
 ║   - 04/21/2026 (Repository created)														  ║
@@ -278,6 +312,10 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, show
         for j in range(N):
             if colors[i][j] == 0:
                 monocolor_squares[i][j] = 0
+
+    if animate:             #tressa just thinks its a nice touch, its pointless but its satisfying to watch
+        showFinalCanvas(colors)  #nothing in the assignment specs said we couldnt,
+                                 # and it adds some finality to finishing an animation
 
     if show_stats:
         stats = makeStats(blob_counts, monocolor_squares, tick + 1, N, colorTotals)
@@ -624,12 +662,13 @@ def showFinalCanvas(data:Grid):
 
     N = len(data)
     drawGrid(N)
-
+    sleep_time = 0.5 / N**2
     for row in range(N):
         for col in range(N):
             color = data[row][col]
             if color != 0:
                 colorSquare(color, row, col)
+                time.sleep(sleep_time)
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -755,7 +794,7 @@ def main():
         firstN,
         firstMaxT,
         animate=True,
-        anim_time=0,
+        anim_time=10,
     )
 
     # SECOND USER-CONTROLLED SIMULATION
@@ -764,13 +803,13 @@ def main():
     MaxT = getValidMaxT()
     anim = (MaxT < 250000)
     drawGrid(N)  #rebuild canvas for new N
-    colors, blob_counts, monocolor_squares = run_simulation(
+    clearStats() #clear stats box
+    run_simulation(
         N,
         MaxT,
         animate=anim,
     )
 
-    showFinalCanvas(colors)
 
     #EXPERIMENT OPTIONS
     choice = getMenuChoice()
