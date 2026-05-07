@@ -282,6 +282,8 @@ def run_simulation(N:int, T:int, animate:bool = False, anim_time:float = 0, show
     if show_stats:
         stats = makeStats(blob_counts, monocolor_squares, tick + 1, N, colorTotals)
         printResults(stats)
+        messagebox.showinfo("Simulation Complete!",
+                            "The simulation is complete! Stats are above.\nPress ok to continue.")
 
     return colors, blob_counts, monocolor_squares
 
