@@ -12,7 +12,7 @@ experiments are run using parameters provided by the user.
 - Matthew Yeager     
 - Jacob Young
 
-### Program Description				
+## Program Description				
 This script simulates dropping red, green, or blue paint blobs onto an empty canvas.
 Each tick, a blob is dropped at a random location, overwriting any prior paint. 
 Multiple experiments are run using parameters provided by the user.                                  
@@ -29,6 +29,6 @@ A new simulation runs with these constraints, followed by a batch of 10 simulati
 which the user chooses to increment either N or T each run. When all 10 are complete,
 stats across the batch are displayed as a graph, and the program ends.                    										  
 
-### Major Packages Used
+## Major Packages Used
 - TKinter	
 - Matplotlib	
